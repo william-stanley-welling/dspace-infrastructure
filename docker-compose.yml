@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  dspace:
+    image: dspace/dspace:latest
+    ports:
+      - "8080:8080"
+    environment:
+      DSPACE_DB_HOST: postgres
+      DSPACE_DB_PORT: 5432
+      DSPACE_DB_NAME: dspace
+      DSPACE_DB_USER: dspace
+      DSPACE_DB_PASSWORD: dspace
+    depends_on:
+      - postgres
+    networks:
+      - dspace-network
+
+  dspace-solr:
+    image: dspace/dspace-solr:latest
+    ports:
+      - "8983:8983"
+    networks:
+      - dspace-network
+
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: dspace
+      POSTGRES_USER: dspace
+      POSTGRES_PASSWORD: dspace
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - dspace-network
+
+volumes:
+  postgres-data:
+
+networks:
+  dspace-network:
+    driver: bridge

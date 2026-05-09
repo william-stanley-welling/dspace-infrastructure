@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  dspace:
+    image: dspace/dspace:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DSPACE_DB_HOST: postgres
+      DSPACE_DB_PORT: 5432
+      DSPACE_DB_NAME: dspace
+      DSPACE_DB_USER: dspace
+      DSPACE_DB_PASSWORD: ${DSPACE_DB_PASSWORD}
+    depends_on:
+      - postgres
+    networks:
+      - dspace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/rest/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  dspace-solr:
+    image: dspace/dspace-solr:latest
+    restart: always
+    ports:
+      - "8983:8983"
+    networks:
+      - dspace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8983/solr/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: dspace
+      POSTGRES_USER: dspace
+      POSTGRES_PASSWORD: ${DSPACE_DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-backups:/backups
+    networks:
+      - dspace-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dspace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  postgres-backups:
+
+networks:
+  dspace-network:
+    driver: bridge
